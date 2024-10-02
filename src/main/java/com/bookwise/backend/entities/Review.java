@@ -1,5 +1,6 @@
 package com.bookwise.backend.entities;
 
+import java.time.LocalDate;
 import java.util.Date;
 
 import org.hibernate.annotations.CreationTimestamp;
@@ -27,7 +28,7 @@ public class Review {
 	
 	@Column(name="date")
 	@CreationTimestamp
-	private Date date;
+	private LocalDate date;
 	
 	@Column(name="rating")
 	private Double rating;
