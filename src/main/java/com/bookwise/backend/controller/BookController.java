@@ -3,12 +3,14 @@ package com.bookwise.backend.controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.bookwise.backend.entities.Book;
 import com.bookwise.backend.service.BookService;
+import com.bookwise.backend.utils.JWTExtractor;
 
 @CrossOrigin("http://localhost:3000")
 @RestController
@@ -21,21 +23,21 @@ public class BookController {
 		this.bookService = bookService;
 	}
 	
-	@GetMapping("/secure/currentloans/count")
-	public int currentLoansCount() {
-		String userEmail = "testuser@email.com";
+	@GetMapping("/secure/currentloans/count")	
+	public int currentLoansCount(@RequestHeader(value="Authorization") String token) {	// accessing Access token sent from frontend
+		String userEmail = JWTExtractor.payloadJWTExtraction(token,"\"sub\"");
 		return bookService.currenLoansCount(userEmail);
 	}
 	
 	@GetMapping("/secure/ischeckedout/byuser")
-	public Boolean checkoutBookByUser(@RequestParam Long bookId) {
-		String userEmail = "testuser@email.com";
+	public Boolean checkoutBookByUser(@RequestHeader(value="Authorization") String token, @RequestParam Long bookId) {
+		String userEmail = JWTExtractor.payloadJWTExtraction(token,"\"sub\"");
 		return bookService.checkoutBookByUser(userEmail, bookId);
 	}
 	
 	@PutMapping("/secure/checkout")
-	public Book checkoutBook(@RequestParam Long bookId) throws Exception{
-		String userEmail = "testuser@email.com";
+	public Book checkoutBook(@RequestHeader(value="Authorization") String token, @RequestParam Long bookId) throws Exception{
+		String userEmail = JWTExtractor.payloadJWTExtraction(token,"\"sub\"");
 		return bookService.checkoutBook(userEmail, bookId);
 	}
 }
