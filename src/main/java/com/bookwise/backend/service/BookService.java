@@ -13,8 +13,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.bookwise.backend.dao.BookRepository;
 import com.bookwise.backend.dao.CheckoutRepository;
+import com.bookwise.backend.dao.HistoryRepository;
 import com.bookwise.backend.entities.Book;
 import com.bookwise.backend.entities.Checkout;
+import com.bookwise.backend.entities.History;
 import com.bookwise.backend.responsemodels.ShelfCurrentLoansResponse;
 
 @Service
@@ -25,9 +27,12 @@ public class BookService {
 	
 	private CheckoutRepository checkoutRepository;
 	
-	public BookService(BookRepository bookRepository, CheckoutRepository checkoutRepository) {
+	private HistoryRepository historyRepository;
+	
+	public BookService(BookRepository bookRepository, CheckoutRepository checkoutRepository, HistoryRepository historyRepository) {
 		this.bookRepository = bookRepository;
 		this.checkoutRepository = checkoutRepository;
+		this.historyRepository = historyRepository;
 	}
 	
 	public Boolean checkoutBookByUser(String userEmail, Long bookId) {
@@ -94,6 +99,13 @@ public class BookService {
 		book.get().setCopiesAvailable(book.get().getCopiesAvailable()+1);
 		bookRepository.save(book.get());
 		checkoutRepository.deleteById(validateCheckout.getId());
+		
+		History history = new History(
+				userEmail, validateCheckout.getCheckoutDate(), LocalDate.now().toString(),
+				book.get().getTitle(), book.get().getAuthor(), book.get().getDescription(), book.get().getImg()
+				);
+		historyRepository.save(history);
+		
 	}
 	
 	public void renewLoan(String userEmail, Long bookId) throws Exception {
