@@ -7,6 +7,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 
 import com.bookwise.backend.entities.Book;
+import com.bookwise.backend.entities.Message;
 import com.bookwise.backend.entities.Review;
 
 @Configuration
@@ -19,9 +20,10 @@ public class MyDataRestConfig implements RepositoryRestConfigurer{
 			CorsRegistry cors) {
 		HttpMethod[] theUnsupportedActions = {HttpMethod.POST, HttpMethod.PATCH, HttpMethod.PUT, HttpMethod.DELETE};
 		
-		config.exposeIdsFor(Book.class, Review.class);	//by default , spring boot not expose Primary Key of enetities. Do this to expose the PK.
+		config.exposeIdsFor(Book.class, Review.class, Message.class);	//by default , spring boot not expose Primary Key of entities. Do this to expose the PK.
 		disableHttpMethods(Book.class, config, theUnsupportedActions);
 		disableHttpMethods(Review.class, config, theUnsupportedActions);
+		disableHttpMethods(Message.class, config, theUnsupportedActions);
 		
 		/*Configure CORS Mapping*/
 		cors.addMapping(config.getBasePath()+ "/**")
