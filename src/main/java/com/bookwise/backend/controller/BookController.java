@@ -4,13 +4,16 @@ import java.util.List;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.bookwise.backend.entities.Book;
+import com.bookwise.backend.requestmodels.AddBookRequest;
 import com.bookwise.backend.responsemodels.ShelfCurrentLoansResponse;
 import com.bookwise.backend.service.BookService;
 import com.bookwise.backend.utils.JWTExtractor;
@@ -60,5 +63,14 @@ public class BookController {
 	public void renewLoan(@RequestHeader(value="Authorization") String token, @RequestParam Long bookId) throws Exception{
 		String userEmail = JWTExtractor.payloadJWTExtraction(token,"\"sub\"");
 		bookService.renewLoan(userEmail, bookId);
+	}
+	
+	@PostMapping("/secure/admin/add")
+	public void addBook(@RequestHeader(value="Authorization") String token, @RequestBody AddBookRequest addBookRequest) throws Exception{
+		String admin = JWTExtractor.payloadJWTExtraction(token,"\"userType\"");
+		if(admin == null || !admin.equals(admin)) {
+			throw new Exception("Administration page only");
+		}
+		bookService.addBook(addBookRequest);
 	}
 }

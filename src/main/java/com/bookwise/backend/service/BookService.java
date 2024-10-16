@@ -17,6 +17,7 @@ import com.bookwise.backend.dao.HistoryRepository;
 import com.bookwise.backend.entities.Book;
 import com.bookwise.backend.entities.Checkout;
 import com.bookwise.backend.entities.History;
+import com.bookwise.backend.requestmodels.AddBookRequest;
 import com.bookwise.backend.responsemodels.ShelfCurrentLoansResponse;
 
 @Service
@@ -121,5 +122,18 @@ public class BookService {
 			validateCheckout.setReturnDate(LocalDate.now().plusDays(7).toString());
 			checkoutRepository.save(validateCheckout);
 		}
+	}
+	
+	public void addBook(AddBookRequest addBookRequest) {
+		Book book = new Book();
+		book.setTitle(addBookRequest.getTitle());
+		book.setAuthor(addBookRequest.getAuthor());
+		book.setDescription(addBookRequest.getDescription());
+		book.setCopies(addBookRequest.getCopies());
+		book.setCopiesAvailable(addBookRequest.getCopies());
+		book.setCategory(addBookRequest.getCategory());
+		book.setImg(addBookRequest.getImg());
+		
+		bookRepository.save(book);
 	}
 }
