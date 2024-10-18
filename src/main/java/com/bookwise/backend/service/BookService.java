@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.bookwise.backend.dao.BookRepository;
 import com.bookwise.backend.dao.CheckoutRepository;
 import com.bookwise.backend.dao.HistoryRepository;
+import com.bookwise.backend.dao.ReviewRepository;
 import com.bookwise.backend.entities.Book;
 import com.bookwise.backend.entities.Checkout;
 import com.bookwise.backend.entities.History;
@@ -30,10 +31,13 @@ public class BookService {
 	
 	private HistoryRepository historyRepository;
 	
-	public BookService(BookRepository bookRepository, CheckoutRepository checkoutRepository, HistoryRepository historyRepository) {
+	private ReviewRepository reviewRepository;
+	
+	public BookService(BookRepository bookRepository, CheckoutRepository checkoutRepository, HistoryRepository historyRepository, ReviewRepository reviewRepository) {
 		this.bookRepository = bookRepository;
 		this.checkoutRepository = checkoutRepository;
 		this.historyRepository = historyRepository;
+		this.reviewRepository = reviewRepository;
 	}
 	
 	public Boolean checkoutBookByUser(String userEmail, Long bookId) {
@@ -135,5 +139,40 @@ public class BookService {
 		book.setImg(addBookRequest.getImg());
 		
 		bookRepository.save(book);
+	}
+	
+	public void incrementBookQuantity(Long bookId) throws Exception{
+		Optional<Book> book = bookRepository.findById(bookId);
+		if(!book.isPresent()) {
+			throw new Exception("Book not found");
+		}
+		
+		book.get().setCopies(book.get().getCopies() + 1);
+		book.get().setCopiesAvailable(book.get().getCopiesAvailable() + 1);
+		
+		bookRepository.save(book.get());
+	}
+	
+	public void decrementBookQuantity(Long bookId) throws Exception{
+		Optional<Book> book = bookRepository.findById(bookId);
+		if(!book.isPresent() || book.get().getCopies() <= 0 || book.get().getCopiesAvailable() <= 0) {
+			throw new Exception("Book not found OR quantity locked");
+		}
+		
+		book.get().setCopies(book.get().getCopies() - 1);
+		book.get().setCopiesAvailable(book.get().getCopiesAvailable() - 1);
+		
+		bookRepository.save(book.get());
+	}
+	
+	public void deleteBook(Long bookId) throws Exception{
+		Optional<Book> book = bookRepository.findById(bookId);
+		if(!book.isPresent()) {
+			throw new Exception("Book not found");
+		}
+		
+		bookRepository.delete(book.get());
+		checkoutRepository.deleteAllByBookId(bookId);
+		reviewRepository.deleteAllByBookId(bookId);
 	}
 }

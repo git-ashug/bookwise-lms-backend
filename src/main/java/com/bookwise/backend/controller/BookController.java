@@ -3,6 +3,7 @@ package com.bookwise.backend.controller;
 import java.util.List;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -73,4 +74,32 @@ public class BookController {
 		}
 		bookService.addBook(addBookRequest);
 	}
+	
+	@PutMapping("/secure/increase/quantity")
+	public void incrementBookQuantity(@RequestHeader(value="Authorization") String token, @RequestParam Long bookId) throws Exception{
+		String admin = JWTExtractor.payloadJWTExtraction(token,"\"userType\"");
+		if(admin == null || !admin.equals(admin)) {
+			throw new Exception("Administration page only");
+		}
+		bookService.incrementBookQuantity(bookId);
+	}
+	
+	@PutMapping("/secure/decrease/quantity")
+	public void decrementBookQuantity(@RequestHeader(value="Authorization") String token, @RequestParam Long bookId) throws Exception{
+		String admin = JWTExtractor.payloadJWTExtraction(token,"\"userType\"");
+		if(admin == null || !admin.equals(admin)) {
+			throw new Exception("Administration page only");
+		}
+		bookService.decrementBookQuantity(bookId);
+	}
+	
+	@DeleteMapping("/secure/delete")
+	public void deleteBook(@RequestHeader(value="Authorization") String token, @RequestParam Long bookId) throws Exception{
+		String admin = JWTExtractor.payloadJWTExtraction(token,"\"userType\"");
+		if(admin == null || !admin.equals(admin)) {
+			throw new Exception("Administration page only");
+		}
+		bookService.deleteBook(bookId);
+	}
+	
 }
