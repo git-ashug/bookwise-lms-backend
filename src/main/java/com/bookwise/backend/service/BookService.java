@@ -2,6 +2,7 @@ package com.bookwise.backend.service;
 
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -14,10 +15,12 @@ import org.springframework.transaction.annotation.Transactional;
 import com.bookwise.backend.dao.BookRepository;
 import com.bookwise.backend.dao.CheckoutRepository;
 import com.bookwise.backend.dao.HistoryRepository;
+import com.bookwise.backend.dao.PaymentRepository;
 import com.bookwise.backend.dao.ReviewRepository;
 import com.bookwise.backend.entities.Book;
 import com.bookwise.backend.entities.Checkout;
 import com.bookwise.backend.entities.History;
+import com.bookwise.backend.entities.Payment;
 import com.bookwise.backend.requestmodels.AddBookRequest;
 import com.bookwise.backend.responsemodels.ShelfCurrentLoansResponse;
 
@@ -33,11 +36,15 @@ public class BookService {
 	
 	private ReviewRepository reviewRepository;
 	
-	public BookService(BookRepository bookRepository, CheckoutRepository checkoutRepository, HistoryRepository historyRepository, ReviewRepository reviewRepository) {
+	private PaymentRepository paymentRepository;
+	
+	public BookService(BookRepository bookRepository, CheckoutRepository checkoutRepository, HistoryRepository historyRepository,
+			ReviewRepository reviewRepository, PaymentRepository paymentRepository) {
 		this.bookRepository = bookRepository;
 		this.checkoutRepository = checkoutRepository;
 		this.historyRepository = historyRepository;
 		this.reviewRepository = reviewRepository;
+		this.paymentRepository = paymentRepository;
 	}
 	
 	public Boolean checkoutBookByUser(String userEmail, Long bookId) {
@@ -54,6 +61,33 @@ public class BookService {
 		if(!book.isPresent() || validateCheckout != null || book.get().getCopiesAvailable() <= 0) {
 			throw new Exception("Book doesn't exist or already checked out by user");
 		}
+		
+		//check if any penalty to be paid before the next checkout
+		List<Checkout> allCheckouts = checkoutRepository.findBooksByUserEmail(userEmail);
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+		boolean bookNeedsReturned = false;
+		
+		for(Checkout checkout : allCheckouts) {
+			LocalDate d1 = LocalDate.parse(checkout.getReturnDate(), formatter);
+			LocalDate d2 = LocalDate.now();
+			int diffInTime = d1.compareTo(d2);
+			if(diffInTime < 0) {
+				bookNeedsReturned = true;
+				break;
+			}
+		}
+		Payment userPayment = paymentRepository.findByUserEmail(userEmail);
+		if((userPayment != null && userPayment.getAmount()>0) || (userPayment != null && bookNeedsReturned)) {
+			throw new Exception("Outstanding fees");
+		}
+		if(userPayment == null) {
+			Payment payment = new Payment();
+			payment.setAmount(0.0);
+			payment.setUserEmail(userEmail);
+			paymentRepository.save(payment);
+		}
+		
+		
 		book.get().setCopiesAvailable(book.get().getCopiesAvailable() - 1);	
 		bookRepository.save(book.get());
 		Checkout checkout = new Checkout(userEmail, LocalDate.now().toString(), LocalDate.now().plusDays(7).toString(), book.get().getId());
@@ -103,6 +137,17 @@ public class BookService {
 		
 		book.get().setCopiesAvailable(book.get().getCopiesAvailable()+1);
 		bookRepository.save(book.get());
+		
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+		LocalDate d1 = LocalDate.parse(validateCheckout.getReturnDate(), formatter);
+		LocalDate d2 = LocalDate.now();
+		int diffInTime = d1.compareTo(d2);
+		if(diffInTime < 0) {
+			Payment payment = new Payment();
+			payment.setAmount(payment.getAmount() + (diffInTime*-1));
+			paymentRepository.save(payment);
+		}
+		
 		checkoutRepository.deleteById(validateCheckout.getId());
 		
 		History history = new History(
