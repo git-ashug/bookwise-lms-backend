@@ -16,7 +16,7 @@ public class SecurityConfig {
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http.csrf(csrf -> csrf.disable())
 				.authorizeHttpRequests(auth -> {
-					auth.requestMatchers("/api/books/secure/**", "/api/reviews/secure/**","/api/messages/secure/**")
+					auth.requestMatchers("/api/books/secure/**", "/api/reviews/secure/**","/api/messages/secure/**", "/api/payment/secure/**")
 					.authenticated()
 					.anyRequest().permitAll();
 				}).oauth2ResourceServer().jwt();

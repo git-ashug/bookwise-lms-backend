@@ -143,7 +143,7 @@ public class BookService {
 		LocalDate d2 = LocalDate.now();
 		int diffInTime = d1.compareTo(d2);
 		if(diffInTime < 0) {
-			Payment payment = new Payment();
+			Payment payment = paymentRepository.findByUserEmail(userEmail);
 			payment.setAmount(payment.getAmount() + (diffInTime*-1));
 			paymentRepository.save(payment);
 		}
